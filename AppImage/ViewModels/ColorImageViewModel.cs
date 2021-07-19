@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Text;
 using System.Windows;
 
@@ -12,12 +14,20 @@ namespace AppImage.ViewModels
 {
     public class ColorImageViewModel : BaseViewModel
     {
+        static int countImage = 0;
         private int R;
         private int G;
         private int B;
         private int Rows;
         private int Cols;
         private Bitmap bm;
+        private int tmpX;
+        private int leftX;
+        private int rightX;
+        private byte[] rightGuy;
+        private byte[] leftGuy;
+        private Color notExist;
+
 
         private string filePath;
         public string FilePath
@@ -39,10 +49,24 @@ namespace AppImage.ViewModels
             get => colorImages;
             set
             {
-                if (!value.Equals(ColorImages))
+                if (!value.Equals(colorImages))
                 {
-                    ColorImages = value;
+                    colorImages = value;
                     OnPropertyChanged(nameof(ColorImages));
+                }
+            }
+        }
+
+        private string interpolatePath;
+        public string InterpolatePath
+        {
+            get => interpolatePath;
+            set
+            {
+                if (!value.Equals(interpolatePath))
+                {
+                    interpolatePath = value;
+                    OnPropertyChanged(nameof(InterpolatePath));
                 }
             }
         }
@@ -67,6 +91,7 @@ namespace AppImage.ViewModels
 
                         FilePath = openFileDialog.FileName;
                     }
+
                     IsLoad = false;
                 }));
             }
@@ -121,6 +146,101 @@ namespace AppImage.ViewModels
                 }));
             }
         }
+
+        private DelegateCommand interpolateButtonCommand;
+        public DelegateCommand InterpolateButtonCommand
+        {
+            get
+            {
+                return interpolateButtonCommand ?? (interpolateButtonCommand = new DelegateCommand((obj) =>
+                {
+                    IsLoad = true;
+
+                    FilePath = @"C:\Users\hp\Desktop\test1.png";
+
+                    if (FilePath == null || FilePath == string.Empty)
+                    {
+                        MessageBox.Show("You need to load file");
+                    }
+                    else
+                    {
+                        bm = new Bitmap(FilePath);
+                        Cols = bm.Width;
+                        Rows = bm.Height;
+
+                        for (int x = 0; x < Cols; x++)
+                        {
+                            for (int y = 0; y < Rows; y++)
+                            {
+
+                                var value = bm.GetPixel(x, y);
+
+                                notExist = Color.FromArgb(255, 127, 127, 127);
+
+                                if (value.Equals(notExist) && x == 0)
+                                {
+                                    var valuePref = bm.GetPixel(x, y);
+                                    leftX = x;
+                                    leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
+                                    tmpX = x;
+
+                                    while (value.Equals(notExist) && x < Cols - 1)
+                                    {
+                                        value = bm.GetPixel(x, y);
+                                        x++;
+                                    }
+                                }
+
+                                if (value.Equals(notExist))
+                                {
+                                    var valuePref = bm.GetPixel(x - 1, y);
+                                    leftX = x - 1;
+                                    leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
+                                    tmpX = x;
+
+                                    while (value.Equals(notExist) && x < Cols -1)
+                                    {
+                                        value = bm.GetPixel(x, y);
+                                        x++;
+                                    }
+                                }
+
+                                if (!(value.Equals(notExist)) && tmpX != 0 && x < Cols - 1)
+                                {
+                                    rightX = x;
+                                    rightGuy = new byte[] { value.A, value.R, value.G, value.B };
+                                    byte[] byteColor = InterpolateMe(leftGuy, rightGuy, leftX, rightX, tmpX);
+                                    bm.SetPixel(tmpX, y, Color.FromArgb(byteColor[0], byteColor[1], byteColor[2], byteColor[3]));
+                                    x = tmpX;
+                                    tmpX = 0;
+                                }
+                            }
+                        }
+
+                        var interpolarImgPath = @"C:\Users\hp\Desktop\img" + countImage.ToString() + ".png";
+                        countImage++;
+                        bm.Save(interpolarImgPath);
+                        InterpolatePath = interpolarImgPath;
+                    }
+
+                    IsLoad = false;
+                }));
+            }
+        }
+        private byte[] InterpolateMe(byte[] leftGuy, byte[] rightGuy, int x1, int x2, int x)
+        {
+            byte[] interArr = new byte[4];
+            interArr[0] = InterpolateVal(leftGuy[0], rightGuy[0], x1, x2, x);
+            interArr[1] = InterpolateVal(leftGuy[1], rightGuy[1], x1, x2, x);
+            interArr[2] = InterpolateVal(leftGuy[2], rightGuy[2], x1, x2, x);
+            interArr[3] = InterpolateVal(leftGuy[3], rightGuy[3], x1, x2, x);
+            return interArr;
+        }
+        private byte InterpolateVal(byte val1, byte val2, int x1, int x2, int x)
+        {
+            return Convert.ToByte(val1 + ((val2 - val1) / (x2 - x1)) * (x - x1));
+        }
+
         protected override void OnPropertyChanged(string propertyName)
         {
             base.OnPropertyChanged(propertyName);
@@ -128,6 +248,10 @@ namespace AppImage.ViewModels
                 if (propertyName == nameof(ColorImages))
                 {
                     ColorImages = ColorImages;
+                }
+                if(propertyName == nameof(InterpolatePath))
+                {
+                    InterpolatePath = InterpolatePath;
                 }
                 if (propertyName == nameof(FilePath))
                 {

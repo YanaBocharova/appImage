@@ -21,9 +21,10 @@
 
         <Button Grid.Row="1" Grid.Column="0" Command="{Binding CountRGBButtonCommand}">Count (R,G,B)</Button>
 
-        <Button Grid.Row="2" Grid.Column="0" Command="{Binding InterpolateButtonCommand}">Interpolate Image</Button>
+        <Button Grid.Row="2" Grid.Column="0" Command="{Binding InterpolateButtonCommand}">Interpolate</Button>
 
         <Image   Grid.Row="0" Grid.Column="1" Margin="15px"  Source="{Binding FilePath}" />
+        <Image   Grid.Row="2" Grid.Column="1" Margin="15px"  Source="{Binding InterpolatePath}" />
 
         <Grid Grid.Row="1" Grid.Column="1">
             <StackPanel Orientation="Horizontal">
