@@ -167,36 +167,30 @@ namespace AppImage.ViewModels
                         bm = new Bitmap(FilePath);
                         Cols = bm.Width;
                         Rows = bm.Height;
+                        notExist = Color.FromArgb(255, 127, 127, 127);
 
                         for (int x = 0; x < Cols; x++)
                         {
                             for (int y = 0; y < Rows; y++)
                             {
-
                                 var value = bm.GetPixel(x, y);
-
-                                notExist = Color.FromArgb(255, 127, 127, 127);
-
-                                if (value.Equals(notExist) && x == 0)
-                                {
-                                    var valuePref = bm.GetPixel(x, y);
-                                    leftX = x;
-                                    leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
-                                    tmpX = x;
-
-                                    while (value.Equals(notExist) && x < Cols - 1)
-                                    {
-                                        value = bm.GetPixel(x, y);
-                                        x++;
-                                    }
-                                }
 
                                 if (value.Equals(notExist))
                                 {
-                                    var valuePref = bm.GetPixel(x - 1, y);
-                                    leftX = x - 1;
-                                    leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
-                                    tmpX = x;
+                                    if (x == 0)
+                                    {
+                                        var valuePref = bm.GetPixel(x, y);
+                                        leftX = x;
+                                        leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
+                                        tmpX = x;
+                                    }
+                                    else
+                                    {
+                                        var valuePref = bm.GetPixel(x - 1, y);
+                                        leftX = x - 1;
+                                        leftGuy = new byte[] { valuePref.A, valuePref.R, valuePref.G, valuePref.B };
+                                        tmpX = x;
+                                    }
 
                                     while (value.Equals(notExist) && x < Cols -1)
                                     {
@@ -217,7 +211,7 @@ namespace AppImage.ViewModels
                             }
                         }
 
-                        var interpolarImgPath = @"C:\Users\hp\Desktop\img" + countImage.ToString() + ".png";
+                        var interpolarImgPath = @"C:\Users\hp\Desktop\img1" + countImage.ToString() + ".png";
                         countImage++;
                         bm.Save(interpolarImgPath);
                         InterpolatePath = interpolarImgPath;
